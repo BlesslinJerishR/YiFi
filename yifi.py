@@ -6,8 +6,7 @@ import csv
 import requests
 from tqdm import tqdm
 from fake_useragent import UserAgent
-import concurrent.futures.thread import ThreadPoolExecutor
-
+from concurrent.futures.thread import ThreadPoolExecutor
 class Scraper(object):
     """Scraper class - Initialized with Keys"""
     
@@ -54,4 +53,184 @@ class Scraper(object):
         self.limit = 50
     
     # Connect to API & extract initial data
+    def __get_api_date(self):
+        # Format URL
+        url = """https://yts.mx/api/v2/list_movies.json?quality={quality}&genre={genre}&minimum_rating={minimum_rating}&sort_by={sort_by}&order_by={order_by}&limit={limit}&page=""".format(
+                 quality = self.quality,
+                 genre = self.genre,
+                 minimum_rating = self.minimum_rating,
+                 sort_by = self.sort_by,
+                 order_by = self.order_by,
+                 limit = self.limit,          
+            )
+    
+        # Fake User Agent Header ( Random )
+        try:
+            user_agent = UserAgent()
+            headers = {'User-Agent' : user_agent.random}
+        except:
+            print("Error Occured during Fake User Agent Generation.")
+
+        # Connection Errors
+        try:
+            req = requests.get(url,
+                               timeout = 6,
+                               verify = True,
+                               headers = headers)
+            req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print('HTTP Error : ', errh)
+            sys.exit(0)
+        except requests.exceptions.ConnectionError as errc:
+            print("Error Connecting : ", errc)
+            sys.exit(0)
+        except requests.exceptions.Timeout as errt:
+            print("Timeout Error : ", errt)
+            sys.exit(0)
+        except requests.exceptions.RequestException as err:
+            print("There was an Error : ", err)
+            sys.exit(0)
+
+        # Exception For JSON Handling
+        try:
+            data = req.json()
+        except json.decoder.JSONDecoderError:
+            print("Could not decode JSON")
+
+        # Adjust Movie Count accordingly to starting page number
+        if self.page.arr == 1:
+            movie_count = data.get('data').get('movie_count')
+        else:
+            movie_count = (data.get('data').get('movie_count')) - ((self.page.arg - 1) * self.limit)
+
+        self.movie_count = movie_count
+        self.url = url
+    
+    def __initialize_download(self):
+        # Used fpt exit/continue prompt that's triggered after 10 existing files
+        self.existing_file_counter = 0
+        self.skip_exit_conditions = False
         
+        # YTS Dupes
+        # More > 1x
+        # IDs are stored in this array
+        # To Check File is downloaded before
+        self.downloaded_movie_ids = []
+        # Calc Page Count !x = 1 to except range(1, 1)
+        if math.trunc(self.movie_count / self.limit) + 1 == 1:
+            page_count = 2
+        else:
+            page_count = math.trunc(self.movie_count / self.limit) + 1
+
+        range_ =  range(int(self.page_arg), page_count)
+        
+        print("Initializing download with these Keys : \n")
+        print("")
+        print(f"""Folder: \t{self.directory}
+                 Quality : \t{self.quality}
+                 Genre: \t{self.genre} 
+                 Min Rating: \t{self.minimum_rating}
+                 Page No: \t{self.page_arg}
+                 Cover Pic: \t{self.poster}
+                 IMDB id : \t{self.imdb_id}
+                 Multi Threading : \t{self.multiprocess}
+                 """)
+        
+        if self.movie_count <= 0:
+            print("Could not find any movies with given Keywords")
+            sys.exit(0)
+        else:
+            print(".torrentz Automation successful .")
+            print(f"Found {self.movie_count} movies. Starting Download ...")
+            
+        # Progress background
+        self.progress_bar = tqdm(total = self.movie_count, 
+                                 position = 0,
+                                 leave = True,
+                                 desc = "Downloading",
+                                 unit = 'Files')
+        
+        # MultiProcess Executor
+        # max_workers to None = Executor Utilize CPU * 5 @
+        executor = ThreadPoolExecutor(max_workers = None)
+        for page in range_:
+            url = f"{self.url}{str(page)}"
+            
+            # Generate Random User Fake User Agent
+            try:
+                user_agent = UserAgent()
+                headers = {'user_agent': user_agent.random}
+            except:
+                print("Error Occured During Fake user Gen.")
+                
+            # API request
+            page_response = requests.get(url, 
+                                         timeout = 6, 
+                                         verify = True, 
+                                         headers = headers).json()
+            
+            movies = page_response.get('data').get('movies')
+            
+            # Movies on Current Page
+            if not movies:
+                print("Could not find any .torrentz on this page.\n")
+            
+            if self.multiprocess:
+                #  wrap tqdm aroun executor to update progress_bar with every MultiProcess
+                tqdm(executor.map(self.__filter_torrents, movies), 
+                     total = self.movie_count,
+                     position = 0,
+                     leave = True)
+                
+            else:
+                for movie in movies:
+                    self.__filter_torrents(movie)
+            
+        self.progress_bar.close()
+        print("Download Finished")
+        
+    
+    # .torrent file selector for downloading
+    def __filter_torrents(self, movie):
+        movie_id = str(movie.get('id'))
+        movie_rating = movie.get('rating')
+        movie_genres = movie.get('genres') if movie.get('genres') else ['None']
+        movie_name_short = movie.get('title')
+        imdb_id = movie.get('imdb_code')
+        year = movie.get('year')
+        language = movie.get('language')
+        yts_url = movie.get('url')
+        
+        if year < self.year_limit:
+            return
+        
+        # .torrent option for current movie 
+        torrent = movie.get('torrents')
+        # reformat names
+        movie_name = movie.get('title_long').translate({ord(i): None for i in "'/\:*?<>|"})
+        # Multi Folder Categorization
+        
+        is_download_successful = False
+        if movie_id in self.download_movie_ids:
+            return
+        
+        # 0 .torrentz available        
+        if torrents is None:
+            tqdm.write(f"Could not find any torrents for {movie_name}. Skipping ...")
+            return
+        
+        bin_content_img = (requests.get(movie.get('large_cover_image'))).content if self.poster else None
+        
+        # Iterate through available torrent files
+        for torrent in torrents:
+            quality = torrent.get('quality')
+            torrent_url = torrent.get('torrent_url')
+            if self.categorize and self.categorize != 'rating':
+                if self.quality == 'all' or self.quality == quality:
+                    bin_content_tor = (requests.get(torrent.get('url'))).content
+                    
+                    for genre in movie_genres:
+                        path = self.__build_path(movie_name, movie_rating, quality, genre, imdb_id)
+                        is_download_successful = self.__download_file(bin_content_tor, bin_content_img, path, movie_name, movie_id)   
+            else:
+                
