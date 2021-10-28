@@ -54,23 +54,67 @@ def main():
                         nargs = '?'
                         )
     
-    parser.add_argument('-c', '--categorizer',
+    parser.add_argument('-r', '--rating',
+                        help='Min Rating score. Integer between 0-10',
+                        dest='rating',
+                        type=str.lower,
+                        required=False,
+                        choices=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                        default='0',
+                        const='0',
+                        nargs='?')
+    
+    parser.add_argument('-c', '--sort',
                         help = """/folder structure.
                                     >Valid arguments are: "rating", "genre",
                                      "rating-genre","genre-rating"
                         """,
-                        dest = 'categorize',
+                        dest = 'sort_by',
                         type = str.lower,
                         required = False,
-                        choices = ['none', 'rating', 'genre', 'genre-rating', 'rating-genre'],
-                        default = 'rating',
-                        const = 'rating',
-                        nargs = '?'
+                        choices=['title', 'year', 'rating', 'latest', 'peers',
+                                 'seeds', 'download_count', 'like_count', 'date_added'],
+                        default='latest',
+                        const='latest',
+                        nargs='?'
                         )
+    
+    parser.add_argument('-c', '--categorize-by',
+                        help='''/folder structure.
+                                Valid arguments are: "rating", "genre",
+                                "rating-genre","genre-rating
+                             ''',
+                        dest='categorize_by',
+                        type=str.lower,
+                        required=False,
+                        choices=['none', 'rating', 'genre', 'genre-rating', 'rating-genre'],
+                        default='rating',
+                        const='rating',
+                        nargs='?')
+    
+    parser.add_argument('-y', '--year-limit',
+                        help='Only downloads movies newer than given year.',
+                        dest='year_limit',
+                        type=int,
+                        required=False,
+                        default='0',
+                        const='0',
+                        nargs='?')
+
+    parser.add_argument('-b', '--background',
+                        help='''append -b to download movie posters.
+                                This will pack .torrent file and the image together in a folder.
+                             ''',
+                        dest='background',
+                        type=bool,
+                        required=False,
+                        default=False,
+                        const=True,
+                        nargs='?')
     
     parser.add_argument('-i', '--imdb',
                         help = 'append -i to append IMDB ID to filename.',
-                        dest = 'imdb',
+                        dest = 'imdb_id',
                         type = bool,
                         required = False,
                         default = False,
