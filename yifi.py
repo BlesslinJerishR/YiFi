@@ -31,7 +31,7 @@ class Scraper(object):
         self.existing_file_counter = None
         self.skip_exit_condition = None
         self.downloaded_movie_ids = None
-        self.pbar = None
+        self.progress_bar = None
         
         # Output Directory
         if args.output:
