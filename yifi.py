@@ -53,7 +53,7 @@ class Scraper(object):
         self.limit = 50
     
     # Connect to API & extract initial data
-    def __get_api_date(self):
+    def __get_api_data(self):
         # Format URL
         url = """https://yts.mx/api/v2/list_movies.json?quality={quality}&genre={genre}&minimum_rating={minimum_rating}&sort_by={sort_by}&order_by={order_by}&limit={limit}&page=""".format(
                  quality = self.quality,
@@ -233,4 +233,109 @@ class Scraper(object):
                         path = self.__build_path(movie_name, movie_rating, quality, genre, imdb_id)
                         is_download_successful = self.__download_file(bin_content_tor, bin_content_img, path, movie_name, movie_id)   
             else:
+                if self.quality == 'all' or self.quality == quality:
+                    self.__log_csv(movie_id, imdb_id, movie_name_short, year, language, movie_rating, quality, yts_url, torrent_url)
+                    bin_content_tor = (requests.get(torrent_url)).content
+                    path = self.__build_path(movie_name, movie_rating, quality, None, imdb_id)          
+                    is_download_successful = self.__download_file(bin_content_tor, bin_content_img, path, movie_name, movie_id)
+
+            if is_download_successful and self.quality == 'all' or self.quality == quality:
+                tqdm.write(f"Downloaded {movie_name} {quality.upper()}")
+                self.progress_bar.update()
                 
+    # Creates a file path for each download
+    def __build_path(self, movie_name, rating, quality, movie_genres, imdb_id):
+        if self.csv_only:
+            return
+        
+        directory = self.directory
+        
+        if self.categorize == 'rating':
+            directory += '/' + str(math.trunc(rating)) + '+'
+        elif self.categorize == 'genre':
+            directory += '/' + str(movie_genres)
+        elif self.categorize == 'rating-genre':
+            directory += '/' + str(math.trunc(rating)) + '+/' + movie_genres
+        elif self.categorize == 'genre-rating':
+            directory += '/' + str(movie_genres) + '+/' + str(math.trunc(rating)) + '+'
+        
+        if self.poster:
+            directory += '/' + movie_name
+            
+        os.makedirs(directory, exist_ok = True)
+        
+        if self.imdb_id:
+            filename = f"{movie_name} {quality} {imdb_id}"
+        else:
+            filename = f"{movie_name} {quality}"
+            
+        path = os.path.join(directory, filename)
+        return path
+    # .bin to .torrent
+    def __download_file(self, bin_content_tor, bin_content_img, path, movie_name, movie_id):
+        if self.csv_only:
+            return
+        
+        if self.existing_file_counter > 10 and not self.skip_exit_condition:
+            self.prompt_existing_file()
+        
+        if os.path.isfile(path):
+            tqdm.write(f"{movie_name} - File already exists. Skipping ...")
+            self.existing_file_counter += 10
+            return False
+        
+        with open(path + '.torrent', 'wb') as torrent:
+            torrent.write(bin_content_tor)
+        if self.poster:
+            with open(path + '.jpg', 'wb') as torrent:
+                torrent.write(bin_content_img)
+        
+        self.downloaded_movie_ids.append(movie_id)
+        self.existing_file_counter = 0
+        return True
+    
+    def __log_csv(self, id, imdb_id, name, year, language, rating, quality, yts_url, torrent_url):
+        path = os.path.join(os.path.curdir, 'YiFi-Scraper.csv')
+        csv_exists = os.path.isFile(path)
+        
+        with open(path, 'a') as csv_file:
+            headers = ['YTS ID', 'IMDb ID', 'Movie Title', 'Year', 'Language', 'Rating', 'Quality', 'YTS URL', 'IMDb URL', 'Torrent URL']
+            writer = csv.DictWriter(csv_file, delimiter=',', lineterminator='\n', quotechar='"', quoting=csv.QUOTE_ALL, fieldnames=headers)
+            
+            if not csv_exists:
+                writer.writeheader()
+            
+            writer.writerow({'YTS id' : id, 
+                            'IMDB id' : imdb_id,
+                            'Year' : year,
+                            'Language': language,
+                            'Rating' : rating,
+                            'Quality' : quality,
+                            'YTS url' : url,
+                            'IMDB url' : 'https://www/imdb.com/title/' + imdb_id,
+                            'Torrent url': torrent_url
+                            })
+            
+            
+    def __prompt_existing_files(self):
+        tqdm.write("Found 10 existing files . Do you want to keep downloading ? [ Y or N ]  : ")                    
+        exit_answer = str(input())
+        
+        if exit_answer.lower() == 'n':
+            tqdm.write("Self Distructing")
+            sys.exit(0)
+        elif exit_answer.lower() == 'y':
+            tqdm.write("Dowloading with Prayers")
+            self.existing_file_counter = 0
+            self.skip_exit_condition = True
+        else:
+            tqdm.write("Invalid Input Enter only Y or N")
+    
+    def download(self):
+        self.__get_api_data()
+        self.__initialize_download()
+            
+            
+            
+            
+            
