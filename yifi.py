@@ -16,14 +16,14 @@ class Scraper(object):
         self.genre = args.genre
         self.minimum_rating = args.rating
         self.quality = '3d' if args.quality == '3d' else args.quality
-        self.categorize = args.categorize
+        self.categorize = args.categorize_by
         self.sort_by = args.sort_by
         self.year_limit = args.year_limit
-        self.page_arg = args.page_arg
+        self.page_arg = args.page
         self.poster = args.background
         self.imdb_id = args.imdb_id
         self.multiprocess = args.multiprocess
-        self.csv = args.csv
+        self.csv_only = args.csv_only
         
         self.movie_count = None
         self.url = None
@@ -34,18 +34,18 @@ class Scraper(object):
         
         # Output Directory
         if args.output:
-            if not args.csv:
+            if not args.csv_only:
                 os.makedirs(self.output, exist_ok = True)
             self.directory = os.path.join(os.path.curdir, self.output)
         else:
-            if not args.csv:
+            if not args.csv_only:
                 os.makedirs(self.categorize.title(), exist_ok = True)
             self.directory = os.path.join(os.path.curdir, self.categorize.title())
             
         # Keys to Download .torrents in reverse chronological orderorder_order_globs
-        if args.sortings == 'latest':
-            self.sortings ='date_added'
-            self.order_by == 'description'
+        if args.sort_by == 'latest':
+            self.sort_by = 'date_added'
+            self.order_by = 'desc'
         else: 
             self.order_by = 'asc'
         

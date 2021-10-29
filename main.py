@@ -1,5 +1,6 @@
 import argparse
 import traceback
+from yifi import Scraper
 
 def main():
     """YiFi - .torrent database downloader for
@@ -8,13 +9,13 @@ def main():
     
     desc = "YiFi - .torrent database downloader for yts.com"
     parser = argparse.ArgumentParser(description=desc)
-    parser.add_argument('o', 'output',
+    parser.add_argument('-o', '--output',
                         help = 'Directory',
                         dest = 'output',
                         type = str.lower,
                         required = False)
     
-    parser.add_argument('-q', 'quality',
+    parser.add_argument('-q', '--quality',
                         help = """
                         Torrent Quality . Valid Arguments are :
                         'all',
@@ -64,10 +65,10 @@ def main():
                         const='0',
                         nargs='?')
     
-    parser.add_argument('-c', '--sort',
+    parser.add_argument('-s', '--sort-by',
                         help = """/folder structure.
-                                    >Valid arguments are: "rating", "genre",
-                                     "rating-genre","genre-rating"
+                                    Valid arguments are: 'title', 'year', 'rating', 'latest', 'peers',
+                                 'seeds', 'download_count', 'like_count', 'date_added'
                         """,
                         dest = 'sort_by',
                         type = str.lower,
@@ -136,12 +137,12 @@ def main():
                         nargs = '?'
                         )
     
-    parser.add_argument('--csv',
+    parser.add_argument('--csv--only',
                         help = """
                             append --csv to log scraped data ONLY to a CSV file.
                                 With this argument .torrent files will not be downloaded
                         """,
-                        dest = 'csv',
+                        dest = 'csv_only',
                         type = bool,
                         required = False,
                         default = 1,
@@ -162,12 +163,13 @@ def main():
     try:
         args = parser.parse_args()
         scraper = Scraper(args)
-        scaper.download()
+        scraper.download()
+        
     except KeyboardInterrupt:
         print("\n Key Interuptions , Exiting with Exitement \n")
     except Exception:
         traceback.print_exc()
-    exit()
+    exit(0)
     
 if __name__ == '__main__':
     main()
