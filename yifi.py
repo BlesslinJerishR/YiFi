@@ -95,7 +95,7 @@ class Scraper(object):
         # Exception For JSON Handling
         try:
             data = req.json()
-        except json.decoder.JSONDecoderError:
+        except json.decoder.JSONDecodeError:
             print("Could not decode JSON")
 
         # Adjust Movie Count accordingly to starting page number
@@ -141,7 +141,7 @@ class Scraper(object):
             print("Could not find any movies with given Keywords")
             sys.exit(0)
         else:
-            print(".torrentz Automation successful .")
+            print(".torrentz automation successful .")
             print(f"Found {self.movie_count} movies. Starting Download ...")
             
         # Progress background
@@ -177,7 +177,7 @@ class Scraper(object):
                 print("Could not find any .torrentz on this page.\n")
             
             if self.multiprocess:
-                #  wrap tqdm aroun executor to update progress_bar with every MultiProcess
+                #  wrap tqdm arounD executor to update progress_bar with every MultiProcess
                 tqdm(executor.map(self.__filter_torrents, movies), 
                      total = self.movie_count,
                      position = 0,
@@ -297,7 +297,7 @@ class Scraper(object):
     
     def __log_csv(self, id, imdb_id, name, year, language, rating, quality, yts_url, torrent_url):
         path = os.path.join(os.path.curdir, 'YiFi-Scraper.csv')
-        csv_exists = os.path.isFile(path)
+        csv_exists = os.path.isfile(path)
         
         with open(path, 'a') as csv_file:
             headers = ['YTS ID', 'IMDb ID', 'Movie Title', 'Year', 'Language', 'Rating', 'Quality', 'YTS URL', 'IMDb URL', 'Torrent URL']
@@ -312,7 +312,7 @@ class Scraper(object):
                             'Language': language,
                             'Rating' : rating,
                             'Quality' : quality,
-                            'YTS url' : url,
+                            'YTS url' : yts_url,
                             'IMDB url' : 'https://www/imdb.com/title/' + imdb_id,
                             'Torrent url': torrent_url
                             })
