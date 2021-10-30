@@ -55,14 +55,15 @@ class Scraper(object):
     # Connect to API & extract initial data
     def __get_api_data(self):
         # Format URL
-        url = """https://yts.mx/api/v2/list_movies.json?quality={quality}&genre={genre}&minimum_rating={minimum_rating}&sort_by={sort_by}&order_by={order_by}&limit={limit}&page=""".format(
-                 quality = self.quality,
-                 genre = self.genre,
-                 minimum_rating = self.minimum_rating,
-                 sort_by = self.sort_by,
-                 order_by = self.order_by,
-                 limit = self.limit,          
-            )
+        url = """https://yts.mx/api/v2/list_movies.json?quality={self.quality}&genre={self.genre}&minimum_rating={self.minimum_rating}&sort_by={self.sort_by}&order_by={self.order_by}&limit={self.limit}&page="""
+        # .format(
+        #          quality = self.quality,
+        #          genre = self.genre,
+        #          minimum_rating = self.minimum_rating,
+        #          sort_by = self.sort_by,
+        #          order_by = self.order_by,
+        #          limit = self.limit,          
+        #     )
     
         # Fake User Agent Header ( Random )
         try:
@@ -98,7 +99,7 @@ class Scraper(object):
             print("Could not decode JSON")
 
         # Adjust Movie Count accordingly to starting page number
-        if self.page.arr == 1:
+        if self.page_arg == 1:
             movie_count = data.get('data').get('movie_count')
         else:
             movie_count = (data.get('data').get('movie_count')) - ((self.page.arg - 1) * self.limit)
@@ -205,13 +206,13 @@ class Scraper(object):
             return
         
         # .torrent option for current movie 
-        torrent = movie.get('torrents')
+        torrents = movie.get('torrents')
         # reformat names
         movie_name = movie.get('title_long').translate({ord(i): None for i in "'/\:*?<>|"})
         # Multi Folder Categorization
         
         is_download_successful = False
-        if movie_id in self.download_movie_ids:
+        if movie_id in self.downloaded_movie_ids:
             return
         
         # 0 .torrentz available        
