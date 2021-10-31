@@ -7,6 +7,6 @@ setup(  name='YiFi',
         packages=find_packages(),
         install_requires=['requests', 'argparse', 'tqdm', 'fake-useragent'],
         entry_points={'console_scripts': 'yifi = yifi.main:main'},
-        license=open('LICENSE').read(),
+        # license=open('LICENSE').read(),
         keywords=['yts', 'YiFy','Blesslin Jerish R', 'scraper', 'media', 'download', 'downloader', 'torrent','yifi']
     )
